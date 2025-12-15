@@ -4,8 +4,8 @@
 Límites
 =============================================*/
 
-$limitContact = 50;
-$limitMessage = 50;
+$limitContact = 10;
+$limitMessage = 15;
 $lastIdMessage = 0;
 
 /*=============================================
@@ -29,7 +29,6 @@ if($getContacts->status == 200){
   if(isset($_GET["phone"])){
 
     $url = "messages?linkTo=phone_message&equalTo=".explode("_",$_GET["phone"])[0]."&orderBy=id_message&orderMode=DESC&startAt=0&endAt=".$limitMessage;
-    $indexContact = explode("_",$_GET["phone"])[1];
   
   /*=============================================
   Traemos la conversación más reciente
@@ -38,7 +37,6 @@ if($getContacts->status == 200){
   }else{
 
     $url = "messages?linkTo=phone_message&equalTo=".$contacts[0]->phone_contact."&orderBy=id_message&orderMode=DESC&startAt=0&endAt=".$limitMessage;
-    $indexContact = 0;
   }
  
   $getMessages = CurlController::request($url,$method,$fields);

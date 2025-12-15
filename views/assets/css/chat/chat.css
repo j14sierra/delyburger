@@ -27,7 +27,7 @@ display: block;
 }
 .chat-container {
   flex: 1;
-  display:flex;
+  display: none;
   flex-direction: column;
   background-color: #fff;
 }
@@ -50,7 +50,7 @@ display: block;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background-image: url('https://chatcenter.tutorialesatualcance.com/views/assets/files/6812890bcf30915.png');
+  background-image: url('http://cms-chatcenter.com/views/assets/files/6812890bcf30915.png');
   background-size: auto;
   background-repeat: repeat;
 }
@@ -111,9 +111,9 @@ display: block;
   cursor: pointer;
 }
 @media (min-width: 992px) {
-  /*.chat-container {
+  .chat-container {
     display:flex;
-  }*/
+  }
   .contact-list {
     max-width:250px;
   }
@@ -125,8 +125,4 @@ display: block;
   .msg {
     max-width: 85%;
   }
-}
-
-.offcanvas-end{
-  width: 85% !important;
 }

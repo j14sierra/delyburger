@@ -16,15 +16,13 @@ Controladores
 
 require_once "../controllers/curl.controller.php"; 
 require_once "../controllers/clients.controller.php";
-require_once "../controllers/business.controller.php";
 require_once "../controllers/bots.controller.php";
-require_once "../controllers/ia.controller.php";
 
 /*=============================================
 TOKEN que configuras en la plataforma de Meta
 =============================================*/
 
-$token = "Madesi14@@";
+$token = "aasdaag4stg3214654as";
 
 if($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["hub_verify_token"])){
 
@@ -71,16 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	Variables iniciales
 	=============================================*/
 
-	$id_conversation_message = null;
 	$type_message = null;
 	$status_message = null;
 	$id_whatsapp_message = null;
 	$client_message	= null;
 	$phone_message	= null;
-	$template_message = null;
 	$order_message = 0;
 	$type_conversation = null;
-	$expiration_message = null;
 
 	/*=============================================
 	Tipo de mensajes
@@ -112,8 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$url = "whatsapps?linkTo=id_number_whatsapp&equalTo=".$data->entry[0]->changes[0]->value->metadata->phone_number_id;
 	$method = "GET";
 	$fields = array();
+	$curl = new CurlController();
+	$getApiWS = $curl->request($url, $method, $fields);
 
-	$getApiWS = CurlController::request($url,$method,$fields);
+	
 
 	if($getApiWS->status == 200){
 
@@ -214,37 +211,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 			$type_conversation = "document";
 		}
-
-		/*=============================================
-		Capturando respuesta interactiva
-		=============================================*/
-
-		if(isset($data->entry[0]->changes[0]->value->messages[0]->interactive)){
-
-			$type_conversation = "interactive";
-
-			/*=============================================
-			Respuesta interacción de botón
-			=============================================*/
-
-			if(isset($data->entry[0]->changes[0]->value->messages[0]->interactive->button_reply)){
-
-				$client_message = '{"id":"'.$data->entry[0]->changes[0]->value->messages[0]->interactive->button_reply->id.'","text":"'.$data->entry[0]->changes[0]->value->messages[0]->interactive->button_reply->title.'"}';
-
-			}
-
-			/*=============================================
-			Respuesta interacción de lista
-			=============================================*/
-
-			if(isset($data->entry[0]->changes[0]->value->messages[0]->interactive->list_reply)){
-
-				$client_message = '{"id":"'.$data->entry[0]->changes[0]->value->messages[0]->interactive->list_reply->id.'","text":"'.$data->entry[0]->changes[0]->value->messages[0]->interactive->list_reply->title.'"}';
-
-			}
-		}
-
-	
+		
+		
+		
 		echo '<pre>$client_message '; print_r($client_message); echo '</pre>';
 		echo '<pre>$phone_message '; print_r($phone_message); echo '</pre>';
 
@@ -253,37 +222,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		=============================================*/
 
 		$url = "messages?linkTo=phone_message&equalTo=".$phone_message."&startAt=0&endAt=1&orderBy=id_message&orderMode=DESC";
+		$curl = new CurlController();
+		$getMessages = $curl->request($url, $method, $fields);
 
-		$getMessages = CurlController::request($url,$method,$fields);
+		
 		
 		if($getMessages->status == 200){
 
-			if($getMessages->results[0]->expiration_message < date("Y-m-d H:i:s")){
-
-				$order_message = 0;
-				$id_conversation_message = null;
-				$expiration_message = "0000-00-00 00:00:00";
-
-				$url = "messages?id=".$phone_message."&nameId=phone_message&token=no&except=id_message";
-				$method = "PUT";
-		        $fields = array(
-		        	"initial_message" => 0
-		        );
-
-		        $fields = http_build_query($fields);
-
-	        	$updateMessage = CurlController::request($url,$method,$fields);
-			
-			}else{
-
-				$order_message = $getMessages->results[0]->order_message + 1;
-				$id_conversation_message = $getMessages->results[0]->id_conversation_message;
-				$expiration_message = $getMessages->results[0]->expiration_message;
-			
-			}
-	
-			$template_message = $getMessages->results[0]->template_message;
-			
+			$order_message = $getMessages->results[0]->order_message + 1;
+		
 		}
 
 		/*=============================================
@@ -293,27 +240,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$url = "messages?token=no&except=id_message";
 		$method = "POST";
 		$fields = array(
-			"id_conversation_message" => $id_conversation_message,
 			"type_message" => $type_message,
 			"id_whatsapp_message" => $id_whatsapp_message,
 			"client_message" => $client_message,
 			"phone_message" => $phone_message,
-			"template_message" => $template_message,
 			"order_message" => $order_message,
-			"expiration_message" => $expiration_message,
-			"initial_message" => 1,
 			"date_created_message" => date("Y-m-d")
 		);
+		$curl = new CurlController();
+		$saveMessage = $curl->request($url, $method, $fields);
 
-		$saveMessage = CurlController::request($url,$method,$fields);
-
+		
 		if($saveMessage->status == 200){
 
 			/*=============================================
 			Responder al cliente
 			=============================================*/
 
-			$responseClients = ClientsController::responseClients($getApiWS,$phone_message,$order_message,$type_conversation,$client_message);
+			$responseClients = ClientsController::responseClients($getApiWS,$phone_message,$order_message,$type_conversation);
 			echo '<pre>$responseClients '; print_r($responseClients); echo '</pre>';
 			
 		}
@@ -334,44 +278,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		echo '<pre>$phone_message '; print_r($phone_message); echo '</pre>';
 
 		/*=============================================
-		Capturar id conversación y fecha de expiración
+		Capturar id conversación
 		=============================================*/
 
-		$url = "messages?linkTo=phone_message,type_message&equalTo=".$phone_message.",client&select=id_conversation_message,expiration_message&orderBy=id_message&orderMode=DESC";
-		$method = "GET";
-		$fields = array();
+		$idConversation = $data->entry[0]->changes[0]->value->statuses[0]->conversation->id;
+		echo '<pre>$idConversation '; print_r($idConversation); echo '</pre>';
 
-		$getIdConversation = CurlController::request($url,$method,$fields);
+		/*=============================================
+		Capturar fecha de vencimiento
+		=============================================*/
 
-		if($getIdConversation->status == 200){
-
-			$getIdConversation = $getIdConversation->results[0];
-
-			if($getIdConversation->id_conversation_message == null){
-
-				/*=============================================
-				Capturar id conversación
-				=============================================*/
-
-				$idConversation = $data->entry[0]->changes[0]->value->statuses[0]->conversation->id;
-
-				/*=============================================
-				Capturar fecha de vencimiento
-				=============================================*/
-
-				$expireConversation = $data->entry[0]->changes[0]->value->statuses[0]->conversation->expiration_timestamp;
-				$expireConversation = new DateTime("@$expireConversation");
-				$expireConversation = $expireConversation->format('Y-m-d H:i:s');
-
-
-			}else{
-
-				$idConversation = $getIdConversation->id_conversation_message;
-	    		$expireConversation = $getIdConversation->expiration_message;
-
-			}
-
-		}
+		$expireConversation = $data->entry[0]->changes[0]->value->statuses[0]->conversation->expiration_timestamp;
+		$expireConversation = new DateTime("@$expireConversation");
+		$expireConversation = $expireConversation->format('Y-m-d H:i:s');
+		echo '<pre>$expireConversation '; print_r($expireConversation); echo '</pre>';
 
 		/*=============================================
 		Traer la última respuesta del negocio
@@ -380,8 +300,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$url = "messages?linkTo=type_message,phone_message&equalTo=business,".$phone_message."&orderBy=id_message&orderMode=DESC&startAt=0&endAt=1";
 		$method  = "GET";
 		$fields = array();
+		$curl = new CurlController();
+		$getMessage = $curl->request($url, $method, $fields);
 
-		$getMessage = CurlController::request($url,$method,$fields);
 
 		if($getMessage->status == 200){
 
@@ -399,22 +320,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	        );
 
 	        $fields = http_build_query($fields);
+			$curl = new CurlController();
+			$updateMessage = $curl->request($url, $method, $fields);
 
-	        $updateMessage = CurlController::request($url,$method,$fields);
+	        
 
 	        if($updateMessage->status == 200){
 
-	        	/*=============================================
-				Respuestas del negocio
-				=============================================*/
-
-				$responseBusiness = BusinessController::responseBusiness($idConversation,$getApiWS,$phone_message,$getMessage->order_message);
-				echo '<pre>$responseBusiness '; print_r($responseBusiness); echo '</pre>';
+	        	echo "todo Ok";
 	        }
 		}
 
 	}
-
 
 }
 

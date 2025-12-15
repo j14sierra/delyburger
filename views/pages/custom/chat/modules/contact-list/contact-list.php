@@ -1,6 +1,6 @@
 <div class="contact-list">
 
-  <input class="form-control rounded mb-2 searchContact" type="text" placeholder="⌕ Buscar...">
+  <input class="form-control rounded mb-2" type="text" placeholder="⌕ Buscar...">
 
   <input type="hidden" id="borderChat" <?php if (isset($_GET["phone"])): ?> value="<?php echo explode("_",$_GET["phone"])[0] ?>" <?php else: ?> value="" <?php endif ?>>
   
@@ -12,11 +12,11 @@
 
       <?php foreach ($contacts as $key => $value): ?>
 
-        <a href="/chat?phone=<?php echo $value->phone_contact ?>_<?php echo $key ?>" class="text-dark">
+        <a href="/chat?phone=<?php echo $value->phone_contact ?>_<?php echo $value->ai_contact ?>_<?php echo $value->id_contact ?>" class="text-dark" onclick="alertClick('Cargando conversación...')">
 
           <div class="contact-item pb-0" <?php if (isset($_GET["phone"]) && explode("_",$_GET["phone"])[0] == $value->phone_contact || $key == 0 && !isset($_GET["phone"]) ): ?> style="border:1px solid #090" <?php endif ?> >
 
-            <div class="d-flex justify-content-between pb-0" onclick="alertClick('Cargando conversación...')">
+            <div class="d-flex justify-content-between pb-0">
 
               <!--======================================
               Mensaje más reciente
@@ -89,18 +89,9 @@
                     <?php if ($bellNotification == "ok"): ?>
                       <i class="bi bi-bell-fill"></i> 
                     <?php endif ?>
-
-                    <?php if (!empty($value->name_contact)): ?>
-
-                      <?php echo substr($value->name_contact,0,15)."..." ?>
-
-                    <?php else: ?>
-     
                     +<?php echo mb_substr($value->phone_contact,0,2) ?> 
                      <?php echo mb_substr($value->phone_contact,2,3) ?>
-                     <?php echo mb_substr($value->phone_contact,5,7) ?>
-
-                    <?php endif ?>  
+                     <?php echo mb_substr($value->phone_contact,5,7) ?>  
                   </strong>
                 </span>
               </div>
@@ -143,9 +134,8 @@
               <div class="custom-control custom-checkbox">
                 <input 
                 type="checkbox" 
-                class="custom-control-input mt-2 form-check-input changeAI" 
-                id="customCheckList_<?php echo $value->id_contact ?>"
-                idContact="<?php echo $value->id_contact ?>" 
+                class="custom-control-input mt-2 form-check-input" 
+                id="customCheck" 
                 name="example1" 
                 <?php if ($value->ai_contact == 1): ?> checked <?php endif ?>
                 style="width:18px !important; height:18px !important">

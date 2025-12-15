@@ -4,7 +4,6 @@
 		<button class="btn btn-default border-0" id="menu-toggle">
 			<i class="bi bi-list"></i>
 		</button>
-
 	</div>
 
 	<div class="d-flex">
